@@ -63,7 +63,7 @@ public class NonBlockingServer {
         //Accept the connection and set non-blocking mode
         SocketChannel client = mySocket.accept();
         client.configureBlocking(false);
-        client.register(selector, SelectionKey.OP_READ);
+        client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     }
 
     private static void handleRead(SelectionKey key) throws IOException {
@@ -82,14 +82,24 @@ public class NonBlockingServer {
         if (!data.isEmpty()) {
             System.out.println("Received message: " + data);
             if ("exit".equalsIgnoreCase(data)) {
+                sendExitMessage(client);
+                ((SocketChannel) key.channel()).finishConnect();
                 key.cancel();
                 key.channel().close();
                 System.out.println("Connection closed");
             }
         } else {
-           key.channel().close();
+            ((SocketChannel) key.channel()).finishConnect();
+            key.channel().close();
             key.cancel();
         }
+    }
+
+    private static void sendExitMessage(SocketChannel client) throws IOException {
+        final byte[] exitBytes = "exit".getBytes();
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(exitBytes.length);
+        byteBuffer.flip();
+        client.write(byteBuffer);
     }
 }
 
