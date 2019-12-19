@@ -30,16 +30,13 @@ public class NonBlockingServer {
                 int ops = socket.validOps();
                 socket.register(selector, ops, null);
                 while (true) {
-                    //FIXME erb vor Client- i koxmic SocketChannel@ close-a arvum, stex voch mi ban chi poxvum
-
                     selector.select();
 
                     Set<SelectionKey> selectedKeys = selector.selectedKeys();
                     Iterator<SelectionKey> iterator = selectedKeys.iterator();
                     while (iterator.hasNext()) {
                         SelectionKey key = iterator.next();
-                        final boolean valid = key.isValid();
-                        if (key.channel().isOpen()) {
+                        if (key.channel().isOpen() && key.isValid()) {
                             System.out.println("Channel open for operations");
                         } else {
                             System.out.println("channel closed for operations");
@@ -79,17 +76,19 @@ public class NonBlockingServer {
         //Create buffer to read data
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.read(buffer);
-
         //Parse data from buffer to String
         String data = new String(buffer.array()).trim();
 
-        if (data
-                .length() > 0) {
+        if (!data.isEmpty()) {
             System.out.println("Received message: " + data);
             if ("exit".equalsIgnoreCase(data)) {
-                client.close();
+                key.cancel();
+                key.channel().close();
                 System.out.println("Connection closed");
             }
+        } else {
+           key.channel().close();
+            key.cancel();
         }
     }
 }

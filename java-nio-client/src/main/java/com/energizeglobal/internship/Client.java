@@ -13,7 +13,7 @@ public class Client {
         try( SocketChannel client =  SocketChannel.open(new InetSocketAddress(LOCAL_HOST, PORT))) {
             String[] messages = new String[]{
                     "Message 1",
-                    "Message 2",
+                    "exit",
                     "Message 3"
             };
 
@@ -25,9 +25,11 @@ public class Client {
                 buffer.put(msg.getBytes());
                 buffer.flip();
                 int bytesWriten = client.write(buffer);
+
                 System.out.println(String.format("Sending message: %s \n bufferBytes: %d", msg, bytesWriten));
-                System.out.println("Client connection closed");
+                buffer.clear();
             }
+            System.out.println();
         } catch (IOException e) {
             e.printStackTrace();
         }
